@@ -502,7 +502,7 @@
 <div class="header">
   <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#666;letter-spacing:1px">v1.6</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v1.7</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -849,7 +849,7 @@ Return ONLY a valid JSON object, no markdown, no backticks, no extra text:
         'x-api-key': getApiKey(),
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 500,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -943,7 +943,7 @@ Return ONLY a valid JSON object, no markdown, no extra text:
         'x-api-key': getApiKey(),
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 300,
         messages: [{ role: 'user', content: prompt }]
       })
