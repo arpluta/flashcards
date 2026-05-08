@@ -585,7 +585,7 @@
 <div class="header">
   <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.5</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.6</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -702,9 +702,9 @@
         <button style="flex:2;background:var(--gold);border:none;color:#0d0d0e;border-radius:8px;padding:9px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer" onclick="submitSentenceConfirm()">Apply →</button>
       </div>
     </div>
-    <button class="btn-sentence" id="btn-sentence" onclick="toggleSentence()">
+    <button class="btn-sentence" id="btn-sentence" onclick="openSentencePanel()">
       <span id="sentence-btn-icon">🎙️</span>
-      <span id="sentence-btn-label">Tap to dictate your own sentence</span>
+      <span id="sentence-btn-label">Tap to add or change example sentence</span>
     </button>
     <div class="btn-row">
       <button class="btn-skip" onclick="resetView()">✕ Skip</button>
@@ -871,7 +871,7 @@ function resetView() {
   document.getElementById('btn-sentence').style.display = 'flex';
   document.getElementById('btn-sentence').classList.remove('listening-sentence');
   document.getElementById('sentence-btn-icon').textContent = '🎙️';
-  document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
+  document.getElementById('sentence-btn-label').textContent = 'Tap to add or change example sentence';
   document.getElementById('sentence-translating').style.display = 'none';
 }
 
@@ -1060,23 +1060,32 @@ function showError(msg) {
 }
 
 // --- SENTENCE DICTATION ---
-let sentenceConfirmLang = null; // null = use currentSpeechLang
+let sentenceConfirmLang = null;
 let sentenceConfirmListening = false;
 let sentenceConfirmRec = null;
+let claudeExample = { example: '', exampleTranslation: '' };
+
+function openSentencePanel() {
+  document.getElementById('sentence-confirm-input').value = '';
+  document.getElementById('sentence-confirm').style.display = 'flex';
+  document.getElementById('btn-sentence').style.display = 'none';
+  sentenceConfirmLang = null;
+  updateSentenceLangBtn();
+}
 
 function toggleSentenceLang() {
-  const isPolish = sentenceConfirmLang === 'pl-PL';
-  sentenceConfirmLang = isPolish ? null : 'pl-PL';
-  document.getElementById('sentence-lang-toggle').textContent = isPolish
-    ? (currentLang === 'en' ? '🇬🇧 EN' : currentLang === 'de' ? '🇩🇪 DE' : currentLang === 'fr' ? '🇫🇷 FR' : currentLang === 'es' ? '🇪🇸 ES' : '🇮🇹 IT')
-    : '🇵🇱 PL';
+  sentenceConfirmLang = sentenceConfirmLang === 'pl-PL' ? null : 'pl-PL';
+  updateSentenceLangBtn();
+}
+
+function updateSentenceLangBtn() {
+  const flagMap = { en:'🇬🇧 EN', de:'🇩🇪 DE', fr:'🇫🇷 FR', es:'🇪🇸 ES', it:'🇮🇹 IT' };
+  document.getElementById('sentence-lang-toggle').textContent =
+    sentenceConfirmLang === 'pl-PL' ? '🇵🇱 PL' : (flagMap[currentLang] || '🇬🇧 EN');
 }
 
 function toggleSentenceMicConfirm() {
-  if (sentenceConfirmListening) {
-    sentenceConfirmRec?.stop();
-    return;
-  }
+  if (sentenceConfirmListening) { sentenceConfirmRec?.stop(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
   sentenceConfirmListening = true;
@@ -1084,115 +1093,41 @@ function toggleSentenceMicConfirm() {
   micBtn.textContent = '⏹';
   micBtn.style.borderColor = 'var(--gold)';
   micBtn.style.color = 'var(--gold)';
-
   sentenceConfirmRec = new SR();
   sentenceConfirmRec.lang = sentenceConfirmLang || currentSpeechLang;
   sentenceConfirmRec.interimResults = true;
   sentenceConfirmRec.continuous = false;
-
   sentenceConfirmRec.onresult = (e) => {
-    const t = Array.from(e.results).map(r => r[0].transcript).join('');
-    document.getElementById('sentence-confirm-input').value = t;
+    document.getElementById('sentence-confirm-input').value =
+      Array.from(e.results).map(r => r[0].transcript).join('');
   };
-
-  sentenceConfirmRec.onend = () => {
+  sentenceConfirmRec.onend = sentenceConfirmRec.onerror = () => {
     sentenceConfirmListening = false;
     micBtn.textContent = '🎙️';
     micBtn.style.borderColor = '#555';
     micBtn.style.color = '#aaa';
   };
-
-  sentenceConfirmRec.onerror = () => {
-    sentenceConfirmListening = false;
-    micBtn.textContent = '🎙️';
-    micBtn.style.borderColor = '#555';
-    micBtn.style.color = '#aaa';
-  };
-
   sentenceConfirmRec.start();
-}
-let claudeExample = { example: '', exampleTranslation: '' };
-
-function toggleSentence() {
-  if (isSentenceListening) {
-    stopSentence();
-  } else {
-    startSentence();
-  }
-}
-
-function startSentence() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return;
-  isSentenceListening = true;
-  lastSentenceTranscript = '';
-  const btn = document.getElementById('btn-sentence');
-  btn.classList.add('listening-sentence');
-  document.getElementById('sentence-btn-icon').textContent = '⏹';
-  document.getElementById('sentence-btn-label').textContent = 'Recording... tap to stop';
-
-  sentenceRecognition = new SR();
-  sentenceRecognition.lang = currentSpeechLang;
-  sentenceRecognition.interimResults = true;
-  sentenceRecognition.continuous = true;
-
-  sentenceRecognition.onresult = (e) => {
-    const t = Array.from(e.results).map(r => r[0].transcript).join('');
-    lastSentenceTranscript = t;
-    document.getElementById('sentence-btn-label').textContent = t;
-  };
-
-  sentenceRecognition.onend = () => {
-    isSentenceListening = false;
-    btn.classList.remove('listening-sentence');
-    document.getElementById('sentence-btn-icon').textContent = '🎙️';
-    if (lastSentenceTranscript.trim()) {
-      showSentenceConfirm(lastSentenceTranscript.trim());
-    } else {
-      document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
-    }
-  };
-
-  sentenceRecognition.onerror = () => {
-    isSentenceListening = false;
-    btn.classList.remove('listening-sentence');
-    document.getElementById('sentence-btn-icon').textContent = '🎙️';
-    document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
-  };
-
-  sentenceRecognition.start();
-}
-
-function stopSentence() {
-  isSentenceListening = false;
-  if (sentenceRecognition) sentenceRecognition.stop();
-}
-
-function showSentenceConfirm(sentence) {
-  document.getElementById('sentence-confirm-input').value = sentence;
-  document.getElementById('sentence-confirm').style.display = 'flex';
-  document.getElementById('btn-sentence').style.display = 'none';
 }
 
 function cancelSentenceConfirm() {
   document.getElementById('sentence-confirm').style.display = 'none';
   document.getElementById('btn-sentence').style.display = 'flex';
-  // Restore Claude's original example
   if (claudeExample.example) {
     currentResult.example = claudeExample.example;
     currentResult.exampleTranslation = claudeExample.exampleTranslation;
     document.getElementById('r-ex').textContent = claudeExample.example;
     document.getElementById('r-ex-tr').textContent = claudeExample.exampleTranslation;
   }
-  document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
+  document.getElementById('sentence-btn-label').textContent = 'Tap to add or change example sentence';
   document.getElementById('sentence-btn-icon').textContent = '🎙️';
 }
 
 async function submitSentenceConfirm() {
-  const sentence = document.getElementById('sentence-confirm-input').value.trim();
-  if (!sentence) return;
+  const input = document.getElementById('sentence-confirm-input').value.trim();
+  if (!input) return;
   document.getElementById('sentence-confirm').style.display = 'none';
-  await translateSentence(sentence);
+  await translateSentence(input);
 }
 
 async function translateSentence(input) {
