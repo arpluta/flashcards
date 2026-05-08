@@ -239,12 +239,12 @@
     align-items: center;
     gap: 8px;
     background: none;
-    border: 1px dashed #333;
-    color: #666;
-    border-radius: 8px;
-    padding: 8px 12px;
+    border: 1px solid #555;
+    color: #aaa;
+    border-radius: 10px;
+    padding: 12px 16px;
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
@@ -252,6 +252,7 @@
     width: 100%;
     text-align: left;
   }
+  .btn-sentence:hover { border-color: var(--gold); color: var(--gold); }
   .btn-sentence.listening-sentence {
     border-color: var(--gold);
     color: var(--gold);
@@ -383,14 +384,14 @@
     border: 1px solid rgba(201,168,76,0.2);
     transform: rotateY(180deg);
   }
-  .fc-lang { font-size: 11px; color: #666; }
+  .fc-lang { font-size: 12px; color: #777; }
   .fc-word { font-family: 'Playfair Display', serif; font-size: 22px; }
   .fc-pos { font-size: 12px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
   .fc-hint { font-size: 12px; color: #666; align-self: flex-end; }
   .fc-trans { font-size: 20px; color: var(--gold); font-weight: 600; }
-  .fc-ex { font-size: 13px; color: #999; font-style: italic; }
-  .fc-ex-tr { font-size: 12px; color: #666; }
-  .fc-date { font-size: 11px; color: #444; align-self: flex-end; }
+  .fc-ex { font-size: 14px; color: #aaa; font-style: italic; }
+  .fc-ex-tr { font-size: 13px; color: #777; }
+  .fc-date { font-size: 12px; color: #555; align-self: flex-end; }
   .del-btn {
     position: absolute;
     top: 8px; right: 10px;
@@ -584,7 +585,7 @@
 <div class="header">
   <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.2</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.4</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -677,11 +678,18 @@
     </div>
     <!-- Sentence confirm (hidden by default) -->
     <div id="sentence-confirm" style="display:none;flex-direction:column;gap:8px">
-      <div style="font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase">Your sentence — edit if needed</div>
-      <textarea id="sentence-confirm-input" style="background:var(--surface2);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:none;width:100%" rows="2"></textarea>
+      <div style="font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase">Your sentence or instruction</div>
+      <textarea id="sentence-confirm-input" style="background:var(--surface2);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:none;width:100%" rows="2" placeholder='e.g. "The server crashed." or "make it IT-related"'></textarea>
+      <div style="font-size:12px;color:#555;line-height:1.8;padding:2px 0">
+        <span style="color:#666;font-size:11px;letter-spacing:1px;text-transform:uppercase">Examples:</span><br>
+        🎤 <em>Dictate your own sentence</em> → Claude translates it<br>
+        ✏️ <em>"make it IT-related"</em> → new example from that context<br>
+        ✏️ <em>"użyj w kontekście biznesowym"</em> → works in Polish too<br>
+        ✏️ <em>"shorter"</em> / <em>"more formal"</em> / <em>"funny"</em>
+      </div>
       <div style="display:flex;gap:8px">
         <button style="flex:1;background:none;border:1px solid #555;color:#aaa;border-radius:8px;padding:9px;font-family:inherit;font-size:13px;cursor:pointer" onclick="cancelSentenceConfirm()">↺ Reset to default</button>
-        <button style="flex:2;background:var(--gold);border:none;color:#0d0d0e;border-radius:8px;padding:9px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer" onclick="submitSentenceConfirm()">Translate →</button>
+        <button style="flex:2;background:var(--gold);border:none;color:#0d0d0e;border-radius:8px;padding:9px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer" onclick="submitSentenceConfirm()">Apply →</button>
       </div>
     </div>
     <button class="btn-sentence" id="btn-sentence" onclick="toggleSentence()">
@@ -853,7 +861,7 @@ function resetView() {
   document.getElementById('btn-sentence').style.display = 'flex';
   document.getElementById('btn-sentence').classList.remove('listening-sentence');
   document.getElementById('sentence-btn-icon').textContent = '🎙️';
-  document.getElementById('sentence-btn-label').textContent = 'Hold & dictate your own sentence';
+  document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
   document.getElementById('sentence-translating').style.display = 'none';
 }
 
@@ -918,12 +926,19 @@ function startListening() {
   recognition.continuous = true;
   recognition.maxAlternatives = 1;
 
+  let autoStopTimer = null;
   recognition.onresult = (e) => {
     const t = Array.from(e.results).map(r => r[0].transcript).join('');
     lastTranscript = t;
     const el = document.getElementById('transcript');
     el.textContent = t;
     el.style.display = 'block';
+    // Auto-stop if it looks like a single word (no spaces) after a short pause
+    clearTimeout(autoStopTimer);
+    const wordCount = t.trim().split(/\s+/).length;
+    if (wordCount <= 2) {
+      autoStopTimer = setTimeout(() => { if (isListening) stopListening(); }, 1500);
+    }
   };
 
   recognition.onend = () => {
@@ -1120,14 +1135,25 @@ async function submitSentenceConfirm() {
   await translateSentence(sentence);
 }
 
-async function translateSentence(sentence) {
+async function translateSentence(input) {
   document.getElementById('sentence-translating').style.display = 'flex';
   document.getElementById('btn-sentence').style.display = 'none';
 
   const langName = LANG_NAMES[currentLang];
-  const prompt = `Translate this ${langName} sentence to Polish concisely.
-Return ONLY a valid JSON object, no markdown, no extra text:
-{"sentence": "${sentence.replace(/"/g,'\\"')}", "sentenceTranslation": "<Polish translation>"}`;
+  const word = currentResult?.word || '';
+
+  const prompt = `You are a language tutor helping someone learn ${langName}.
+The word/phrase being studied is: "${word}"
+The current example sentence is: "${claudeExample.example}"
+
+The user provided this input: "${input.replace(/"/g,'\\"')}"
+
+Decide what they want:
+- If it looks like a ${langName} sentence containing or related to the word → use it as the new example
+- If it looks like an instruction (in any language, e.g. "make it IT-related", "użyj słowa w kontekście biznesowym", "shorter") → generate a new example sentence following that instruction
+
+Return ONLY a valid JSON object, no markdown:
+{"sentence": "<example sentence in ${langName}>", "sentenceTranslation": "<Polish translation>"}`;
 
   try {
     const res = await fetch('https://vocabrec.arkadiusz-pluta89.workers.dev/', {
