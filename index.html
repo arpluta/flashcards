@@ -326,8 +326,8 @@
   .tip {
     margin-top: auto;
     padding-top: 24px;
-    font-size: 12px;
-    color: #2e2e30;
+    font-size: 13px;
+    color: #666;
     text-align: center;
     line-height: 1.9;
   }
@@ -455,7 +455,29 @@
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  .btn-export {
+  .key-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid #2a3a2a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #6a9;
+  }
+  .key-status button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .hidden { display: none !important; }
     background: none;
     border: 1px solid var(--border);
     color: var(--text-dim);
@@ -478,9 +500,12 @@
 <!-- HEADER -->
 <div class="header">
   <div class="logo"><span class="logo-star">✦</span> FLASHCARDS</div>
-  <div class="tabs">
-    <button class="tab active" onclick="switchView('add')">Dictate</button>
-    <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-size:10px;color:#333;letter-spacing:1px">v1.5</span>
+    <div class="tabs">
+      <button class="tab active" onclick="switchView('add')">Dictate</button>
+      <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
+    </div>
   </div>
 </div>
 
@@ -488,13 +513,22 @@
 <div class="view active" id="view-add">
 
   <!-- API Key setup -->
-  <div class="setup-banner" id="setup-banner">
+  <div class="setup-banner hidden" id="setup-banner">
     <div class="setup-label">🔑 API Key (one-time setup)</div>
     <input class="api-input" id="api-key-input" type="password" placeholder="sk-ant-..." autocomplete="off">
     <button class="api-save" onclick="saveApiKey()">Save key</button>
     <div style="font-size:11px;color:#666;line-height:1.6">
       Get your key at <strong style="color:var(--gold)">console.anthropic.com</strong> → API Keys.<br>
       Stored only in your browser — never sent anywhere else.
+    </div>
+  </div>
+
+  <!-- Key status bar (shown when key exists) -->
+  <div id="key-status" class="key-status hidden">
+    <span>🔑 API key saved</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="changeApiKey()">Change</button>
+      <button onclick="removeApiKey()" style="color:#d06060;border-color:#4a2020">Remove</button>
     </div>
   </div>
 
@@ -509,10 +543,8 @@
 
   <!-- MIC -->
   <div class="mic-section" id="mic-section">
-    <button class="mic-btn" id="mic-btn"
-      onmousedown="startListening()" onmouseup="stopListening()"
-      ontouchstart="startListening()" ontouchend="stopListening()">🎤</button>
-    <div class="mic-label" id="mic-label">Hold & say a word</div>
+    <button class="mic-btn" id="mic-btn" onclick="toggleListening()">🎤</button>
+    <div class="mic-label" id="mic-label">Tap to start recording</div>
     <div class="transcript-pill" id="transcript" style="display:none"></div>
     <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:340px">
       <div style="flex:1;height:1px;background:var(--border)"></div>
@@ -559,9 +591,7 @@
       <button class="btn-skip" onclick="resetView()">✕ Skip</button>
       <button class="btn-add" onclick="addCard()">✓ Add to deck</button>
     </div>
-    <button class="btn-next"
-      onmousedown="startListening()" onmouseup="stopListening()"
-      ontouchstart="startListening()" ontouchend="stopListening()">
+    <button class="btn-next" onclick="toggleListening()">
       🎤 Next word
     </button>
   </div>
@@ -572,7 +602,7 @@
     <button class="retry-btn" onclick="resetView()">Try again</button>
   </div>
 
-  <div class="tip">Hold 🎤 and say a word. Release — Claude translates automatically.</div>
+  <div class="tip">Tap 🎤 to start • tap again to stop & translate</div>
 </div>
 
 <!-- LIST VIEW -->
@@ -622,19 +652,35 @@ function saveApiKey() {
   }
   try {
     localStorage.setItem('fiszki-api-key', key);
-    // Verify it was actually saved
     const saved = localStorage.getItem('fiszki-api-key');
     if (saved === key) {
-      document.getElementById('setup-banner').classList.add('hidden');
+      updateKeyUI();
       showToast('✓ Key saved permanently!');
     } else {
       alert('Could not save the key. Try allowing cookies/storage for this site in browser settings.');
     }
   } catch(e) {
-    alert('Storage blocked. Allow cookies for arpluta.github.io in your browser settings.');
+    alert('Storage blocked. Allow cookies for this site in browser settings.');
   }
 }
 function getApiKey() { return localStorage.getItem('fiszki-api-key') || ''; }
+function changeApiKey() {
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('setup-banner').classList.remove('hidden');
+  document.getElementById('key-status').classList.add('hidden');
+  document.getElementById('api-key-input').focus();
+}
+function removeApiKey() {
+  if (!confirm('Remove saved API key?')) return;
+  localStorage.removeItem('fiszki-api-key');
+  updateKeyUI();
+  showToast('Key removed');
+}
+function updateKeyUI() {
+  const hasKey = !!getApiKey();
+  document.getElementById('setup-banner').classList.toggle('hidden', hasKey);
+  document.getElementById('key-status').classList.toggle('hidden', !hasKey);
+}
 
 // --- UI HELPERS ---
 function switchView(name) {
@@ -674,7 +720,7 @@ function resetView() {
   t.textContent = '';
   document.getElementById('mic-btn').classList.remove('listening');
   document.getElementById('mic-btn').textContent = '🎤';
-  document.getElementById('mic-label').textContent = 'Hold & say a word';
+  document.getElementById('mic-label').textContent = 'Tap to start recording';
   document.getElementById('btn-sentence').style.display = 'flex';
   document.getElementById('btn-sentence').classList.remove('listening-sentence');
   document.getElementById('sentence-btn-icon').textContent = '🎙️';
@@ -684,45 +730,47 @@ function resetView() {
 
 // --- SPEECH RECOGNITION ---
 let micRetries = 0;
+let isListening = false;
+
+function toggleListening() {
+  if (isListening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
 
 function translateTyped() {
   const input = document.getElementById('text-input');
   const word = input.value.trim();
   if (!word) return;
-  if (!getApiKey()) {
-    document.getElementById('setup-banner').classList.remove('hidden');
-    document.getElementById('api-key-input').focus();
-    return;
-  }
+  if (!getApiKey()) { updateKeyUI(); return; }
   input.value = '';
   hide('mic-section');
   translate(word);
 }
 
 function startListening() {
-  if (!getApiKey()) {
-    document.getElementById('setup-banner').classList.remove('hidden');
-    document.getElementById('api-key-input').focus();
-    return;
-  }
+  if (!getApiKey()) { updateKeyUI(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     showError('Your browser does not support speech recognition. Use Chrome or Safari.');
     return;
   }
+  isListening = true;
   lastTranscript = '';
   hide('result-card');
   hide('err-box');
   show('mic-section');
   document.getElementById('transcript').style.display = 'none';
   document.getElementById('mic-btn').classList.add('listening');
-  document.getElementById('mic-btn').textContent = '🔴';
-  document.getElementById('mic-label').textContent = 'Listening... (release to translate)';
+  document.getElementById('mic-btn').textContent = '⏹';
+  document.getElementById('mic-label').textContent = 'Recording... tap to stop';
 
   recognition = new SR();
   recognition.lang = currentSpeechLang;
   recognition.interimResults = true;
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.maxAlternatives = 1;
 
   recognition.onresult = (e) => {
@@ -735,30 +783,31 @@ function startListening() {
   };
 
   recognition.onend = async () => {
+    isListening = false;
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
     if (lastTranscript.trim()) {
       micRetries = 0;
       await translate(lastTranscript.trim());
     } else {
-      document.getElementById('mic-label').textContent = 'Hold & say a word';
+      document.getElementById('mic-label').textContent = 'Tap to start recording';
     }
   };
 
   recognition.onerror = (e) => {
+    isListening = false;
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
     if (e.error === 'network' && micRetries < 2) {
-      // Auto-retry on network error — Chrome sometimes needs a warm-up
       micRetries++;
       document.getElementById('mic-label').textContent = `Retrying... (${micRetries}/2)`;
-      setTimeout(() => startListening(), 600);
+      setTimeout(() => startListening(), 800);
     } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
       micRetries = 0;
-      showError('Microphone error: ' + e.error + '. Try clicking the mic button once before holding.');
+      showError('Microphone error: ' + e.error + '. Check browser permissions.');
     } else {
       micRetries = 0;
-      document.getElementById('mic-label').textContent = 'Hold & say a word';
+      document.getElementById('mic-label').textContent = 'Tap to start recording';
     }
   };
 
@@ -766,6 +815,7 @@ function startListening() {
 }
 
 function stopListening() {
+  isListening = false;
   if (recognition) recognition.stop();
 }
 
@@ -1028,9 +1078,7 @@ function esc(str) {
 // --- INIT ---
 window.addEventListener('load', () => {
   loadData();
-  if (!getApiKey()) {
-    document.getElementById('setup-banner').classList.remove('hidden');
-  }
+  updateKeyUI();
 });
 </script>
 </body>
