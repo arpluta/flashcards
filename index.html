@@ -268,8 +268,8 @@
   .btn-skip {
     flex: 1;
     background: none;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
+    border: 1px solid #555;
+    color: #aaa;
     border-radius: 10px;
     padding: 12px;
     font-family: inherit;
@@ -290,8 +290,8 @@
   }
   .btn-next {
     background: none;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
+    border: 1px solid #555;
+    color: #aaa;
     border-radius: 10px;
     padding: 12px;
     font-family: inherit;
@@ -386,7 +386,7 @@
   .fc-lang { font-size: 11px; color: #666; }
   .fc-word { font-family: 'Playfair Display', serif; font-size: 22px; }
   .fc-pos { font-size: 12px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
-  .fc-hint { font-size: 12px; color: #444; align-self: flex-end; }
+  .fc-hint { font-size: 12px; color: #666; align-self: flex-end; }
   .fc-trans { font-size: 20px; color: var(--gold); font-weight: 600; }
   .fc-ex { font-size: 13px; color: #999; font-style: italic; }
   .fc-ex-tr { font-size: 12px; color: #666; }
@@ -396,25 +396,27 @@
     top: 8px; right: 10px;
     background: none;
     border: none;
-    color: #444;
-    font-size: 18px;
+    color: #888;
+    font-size: 20px;
     cursor: pointer;
     padding: 4px 6px;
     line-height: 1;
     z-index: 2;
   }
+  .del-btn:hover { color: #d06060; }
   .edit-btn {
     position: absolute;
-    top: 8px; right: 36px;
+    top: 10px; right: 40px;
     background: none;
     border: none;
-    color: #444;
-    font-size: 15px;
+    color: #888;
+    font-size: 16px;
     cursor: pointer;
     padding: 4px 6px;
     line-height: 1;
     z-index: 2;
   }
+  .edit-btn:hover { color: var(--gold); }
   /* Edit modal */
   .modal-overlay {
     display: none;
@@ -532,9 +534,10 @@
     cursor: pointer;
   }
   .hidden { display: none !important; }
+  .btn-export {
     background: none;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
+    border: 1px solid #555;
+    color: #aaa;
     padding: 8px 16px;
     border-radius: 8px;
     font-family: inherit;
@@ -581,7 +584,7 @@
 <div class="header">
   <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.0</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.2</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -628,7 +631,7 @@
     <div class="transcript-pill" id="transcript" style="display:none"></div>
     <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:340px">
       <div style="flex:1;height:1px;background:var(--border)"></div>
-      <span style="font-size:11px;color:#333;letter-spacing:1px">OR TYPE</span>
+      <span style="font-size:11px;color:#555;letter-spacing:1px">OR TYPE</span>
       <div style="flex:1;height:1px;background:var(--border)"></div>
     </div>
     <div style="display:flex;gap:8px;width:100%;max-width:340px">
@@ -677,7 +680,7 @@
       <div style="font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase">Your sentence — edit if needed</div>
       <textarea id="sentence-confirm-input" style="background:var(--surface2);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:none;width:100%" rows="2"></textarea>
       <div style="display:flex;gap:8px">
-        <button style="flex:1;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:9px;font-family:inherit;font-size:13px;cursor:pointer" onclick="cancelSentenceConfirm()">✕ Use Claude's</button>
+        <button style="flex:1;background:none;border:1px solid #555;color:#aaa;border-radius:8px;padding:9px;font-family:inherit;font-size:13px;cursor:pointer" onclick="cancelSentenceConfirm()">↺ Reset to default</button>
         <button style="flex:2;background:var(--gold);border:none;color:#0d0d0e;border-radius:8px;padding:9px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer" onclick="submitSentenceConfirm()">Translate →</button>
       </div>
     </div>
@@ -912,7 +915,7 @@ function startListening() {
   recognition = new SR();
   recognition.lang = currentSpeechLang;
   recognition.interimResults = true;
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.maxAlternatives = 1;
 
   recognition.onresult = (e) => {
@@ -1056,7 +1059,7 @@ function startSentence() {
   sentenceRecognition = new SR();
   sentenceRecognition.lang = currentSpeechLang;
   sentenceRecognition.interimResults = true;
-  sentenceRecognition.continuous = false;
+  sentenceRecognition.continuous = true;
 
   sentenceRecognition.onresult = (e) => {
     const t = Array.from(e.results).map(r => r[0].transcript).join('');
