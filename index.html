@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Flashcards">
+<meta name="apple-mobile-web-app-title" content="VocabRec">
 <meta name="theme-color" content="#0d0d0e">
-<title>Flashcards</title>
+<title>VocabRec — Flashcard Recorder</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230d0d0e'/><rect x='8' y='20' width='30' height='22' rx='4' fill='%23c9a84c' opacity='0.15'/><rect x='8' y='20' width='30' height='22' rx='4' fill='none' stroke='%23c9a84c' stroke-width='2'/><line x1='14' y1='29' x2='32' y2='29' stroke='%23c9a84c' stroke-width='2' stroke-linecap='round'/><line x1='14' y1='34' x2='26' y2='34' stroke='%23c9a84c' stroke-width='2' stroke-linecap='round'/><rect x='40' y='10' width='16' height='22' rx='8' fill='%23c9a84c'/><line x1='48' y1='32' x2='48' y2='38' stroke='%23c9a84c' stroke-width='2' stroke-linecap='round'/><path d='M42 34 Q42 42 48 42 Q54 42 54 34' fill='none' stroke='%23c9a84c' stroke-width='2' stroke-linecap='round'/><line x1='44' y1='42' x2='52' y2='42' stroke='%23c9a84c' stroke-width='2' stroke-linecap='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -499,9 +500,9 @@
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo"><span class="logo-star">✦</span> FLASHCARDS</div>
+  <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#333;letter-spacing:1px">v1.5</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v1.5</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -754,9 +755,10 @@ function startListening() {
   if (!getApiKey()) { updateKeyUI(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    showError('Your browser does not support speech recognition. Use Chrome or Safari.');
+    showError('Speech recognition not supported. Use the text input below.');
     return;
   }
+
   isListening = true;
   lastTranscript = '';
   hide('result-card');
@@ -770,11 +772,10 @@ function startListening() {
   recognition = new SR();
   recognition.lang = currentSpeechLang;
   recognition.interimResults = true;
-  recognition.continuous = true;
+  recognition.continuous = false;
   recognition.maxAlternatives = 1;
 
   recognition.onresult = (e) => {
-    micRetries = 0;
     const t = Array.from(e.results).map(r => r[0].transcript).join('');
     lastTranscript = t;
     const el = document.getElementById('transcript');
@@ -787,7 +788,6 @@ function startListening() {
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
     if (lastTranscript.trim()) {
-      micRetries = 0;
       await translate(lastTranscript.trim());
     } else {
       document.getElementById('mic-label').textContent = 'Tap to start recording';
@@ -798,16 +798,21 @@ function startListening() {
     isListening = false;
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
-    if (e.error === 'network' && micRetries < 2) {
-      micRetries++;
-      document.getElementById('mic-label').textContent = `Retrying... (${micRetries}/2)`;
-      setTimeout(() => startListening(), 800);
+    document.getElementById('mic-label').textContent = 'Tap to start recording';
+
+    if (e.error === 'network') {
+      // Brave or network blocks Google Speech API
+      const isBrave = navigator.userAgent.includes('Brave') ||
+        (navigator.brave && typeof navigator.brave.isBrave === 'function');
+      if (isBrave) {
+        showError('Brave browser blocks speech recognition. Go to brave://settings/privacy and disable "Block fingerprinting", or use Chrome/Edge. You can still use the text input below.');
+      } else {
+        showError('Speech recognition network error. Google\'s speech servers may be blocked. Try Chrome or use the text input below.');
+      }
+    } else if (e.error === 'not-allowed') {
+      showError('Microphone access denied. Allow microphone in browser settings for this site.');
     } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      micRetries = 0;
-      showError('Microphone error: ' + e.error + '. Check browser permissions.');
-    } else {
-      micRetries = 0;
-      document.getElementById('mic-label').textContent = 'Tap to start recording';
+      showError('Microphone error: ' + e.error + '. Use the text input below.');
     }
   };
 
