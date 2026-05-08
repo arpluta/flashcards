@@ -502,7 +502,7 @@
 <div class="header">
   <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#666;letter-spacing:1px">v1.5</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v1.6</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -842,13 +842,11 @@ Return ONLY a valid JSON object, no markdown, no backticks, no extra text:
 }`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://vocabrec.arkadiusz-pluta89.workers.dev/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': getApiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-calls': 'true'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -938,13 +936,11 @@ Return ONLY a valid JSON object, no markdown, no extra text:
 {"sentence": "${sentence.replace(/"/g,'\\"')}", "sentenceTranslation": "<Polish translation>"}`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('https://vocabrec.arkadiusz-pluta89.workers.dev/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': getApiKey(),
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-calls': 'true'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
