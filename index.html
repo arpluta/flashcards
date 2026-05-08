@@ -514,6 +514,20 @@
       ontouchstart="startListening()" ontouchend="stopListening()">🎤</button>
     <div class="mic-label" id="mic-label">Hold & say a word</div>
     <div class="transcript-pill" id="transcript" style="display:none"></div>
+    <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:340px">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:11px;color:#333;letter-spacing:1px">OR TYPE</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div style="display:flex;gap:8px;width:100%;max-width:340px">
+      <input id="text-input" type="text" placeholder="Type a word..."
+        style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:15px;outline:none;"
+        onkeydown="if(event.key==='Enter')translateTyped()"
+        onfocus="this.style.borderColor='var(--gold)'"
+        onblur="this.style.borderColor='var(--border)'">
+      <button onclick="translateTyped()"
+        style="background:var(--gold);border:none;border-radius:10px;padding:11px 16px;color:#0d0d0e;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">→</button>
+    </div>
   </div>
 
   <!-- SPINNER -->
@@ -602,10 +616,23 @@ function saveData() {
 }
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
-  if (!key.startsWith('sk-')) { alert('Invalid API key. It should start with sk-'); return; }
-  localStorage.setItem('fiszki-api-key', key);
-  document.getElementById('setup-banner').classList.add('hidden');
-  showToast('✓ Key saved!');
+  if (!key.startsWith('sk-ant-') && !key.startsWith('sk-')) {
+    alert('Invalid API key. It should start with sk-ant-');
+    return;
+  }
+  try {
+    localStorage.setItem('fiszki-api-key', key);
+    // Verify it was actually saved
+    const saved = localStorage.getItem('fiszki-api-key');
+    if (saved === key) {
+      document.getElementById('setup-banner').classList.add('hidden');
+      showToast('✓ Key saved permanently!');
+    } else {
+      alert('Could not save the key. Try allowing cookies/storage for this site in browser settings.');
+    }
+  } catch(e) {
+    alert('Storage blocked. Allow cookies for arpluta.github.io in your browser settings.');
+  }
 }
 function getApiKey() { return localStorage.getItem('fiszki-api-key') || ''; }
 
@@ -656,6 +683,22 @@ function resetView() {
 }
 
 // --- SPEECH RECOGNITION ---
+let micRetries = 0;
+
+function translateTyped() {
+  const input = document.getElementById('text-input');
+  const word = input.value.trim();
+  if (!word) return;
+  if (!getApiKey()) {
+    document.getElementById('setup-banner').classList.remove('hidden');
+    document.getElementById('api-key-input').focus();
+    return;
+  }
+  input.value = '';
+  hide('mic-section');
+  translate(word);
+}
+
 function startListening() {
   if (!getApiKey()) {
     document.getElementById('setup-banner').classList.remove('hidden');
@@ -680,8 +723,10 @@ function startListening() {
   recognition.lang = currentSpeechLang;
   recognition.interimResults = true;
   recognition.continuous = false;
+  recognition.maxAlternatives = 1;
 
   recognition.onresult = (e) => {
+    micRetries = 0;
     const t = Array.from(e.results).map(r => r[0].transcript).join('');
     lastTranscript = t;
     const el = document.getElementById('transcript');
@@ -693,6 +738,7 @@ function startListening() {
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
     if (lastTranscript.trim()) {
+      micRetries = 0;
       await translate(lastTranscript.trim());
     } else {
       document.getElementById('mic-label').textContent = 'Hold & say a word';
@@ -702,9 +748,16 @@ function startListening() {
   recognition.onerror = (e) => {
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
-    if (e.error !== 'no-speech' && e.error !== 'aborted') {
-      showError('Microphone error: ' + e.error + '. Check permissions.');
+    if (e.error === 'network' && micRetries < 2) {
+      // Auto-retry on network error — Chrome sometimes needs a warm-up
+      micRetries++;
+      document.getElementById('mic-label').textContent = `Retrying... (${micRetries}/2)`;
+      setTimeout(() => startListening(), 600);
+    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      micRetries = 0;
+      showError('Microphone error: ' + e.error + '. Try clicking the mic button once before holding.');
     } else {
+      micRetries = 0;
       document.getElementById('mic-label').textContent = 'Hold & say a word';
     }
   };
