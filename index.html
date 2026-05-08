@@ -231,9 +231,9 @@
     gap: 5px;
     position: relative;
   }
-  .r-ex-label { font-size: 10px; color: #555; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; }
-  .r-ex { font-size: 14px; color: #999; font-style: italic; }
-  .r-ex-tr { font-size: 12px; color: var(--text-muted); }
+  .r-ex-label { font-size: 11px; color: #666; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; }
+  .r-ex { font-size: 15px; color: #bbb; font-style: italic; }
+  .r-ex-tr { font-size: 13px; color: #777; }
   .btn-sentence {
     display: flex;
     align-items: center;
@@ -383,26 +383,79 @@
     border: 1px solid rgba(201,168,76,0.2);
     transform: rotateY(180deg);
   }
-  .fc-lang { font-size: 11px; color: #555; }
+  .fc-lang { font-size: 11px; color: #666; }
   .fc-word { font-family: 'Playfair Display', serif; font-size: 22px; }
-  .fc-pos { font-size: 11px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
-  .fc-hint { font-size: 11px; color: #2a2a2a; align-self: flex-end; }
+  .fc-pos { font-size: 12px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+  .fc-hint { font-size: 12px; color: #444; align-self: flex-end; }
   .fc-trans { font-size: 20px; color: var(--gold); font-weight: 600; }
-  .fc-ex { font-size: 12px; color: #777; font-style: italic; }
-  .fc-ex-tr { font-size: 11px; color: #484848; }
-  .fc-date { font-size: 11px; color: #2a2a2a; align-self: flex-end; }
+  .fc-ex { font-size: 13px; color: #999; font-style: italic; }
+  .fc-ex-tr { font-size: 12px; color: #666; }
+  .fc-date { font-size: 11px; color: #444; align-self: flex-end; }
   .del-btn {
     position: absolute;
     top: 8px; right: 10px;
     background: none;
     border: none;
-    color: #2a2a2a;
-    font-size: 22px;
+    color: #444;
+    font-size: 18px;
     cursor: pointer;
     padding: 4px 6px;
     line-height: 1;
     z-index: 2;
   }
+  .edit-btn {
+    position: absolute;
+    top: 8px; right: 36px;
+    background: none;
+    border: none;
+    color: #444;
+    font-size: 15px;
+    cursor: pointer;
+    padding: 4px 6px;
+    line-height: 1;
+    z-index: 2;
+  }
+  /* Edit modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 20px; }
+  .modal label { font-size: 11px; color: #666; letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+  .modal input, .modal textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  .modal textarea { resize: vertical; min-height: 60px; }
+  .modal input:focus, .modal textarea:focus { border-color: var(--gold); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-save { flex: 2; background: var(--gold); border: none; color: #0d0d0e; border-radius: 8px; padding: 11px; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .modal-cancel { flex: 1; background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; padding: 11px; font-family: inherit; font-size: 14px; cursor: pointer; }
   .del-confirm {
     position: absolute;
     top: 8px; right: 8px;
@@ -494,6 +547,32 @@
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  /* Confirm section */
+  .confirm-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: slideUp 0.2s ease;
+  }
+  .confirm-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+  .confirm-input {
+    width: 100%;
+    max-width: 340px;
+    background: var(--surface);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    outline: none;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -502,7 +581,7 @@
 <div class="header">
   <div class="logo"><span class="logo-star">◎</span> VOCABREC</div>
   <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:10px;color:#666;letter-spacing:1px">v1.7</span>
+    <span style="font-size:10px;color:#666;letter-spacing:1px">v2.0</span>
     <div class="tabs">
       <button class="tab active" onclick="switchView('add')">Dictate</button>
       <button class="tab" id="list-tab" onclick="switchView('list')">My Cards (0)</button>
@@ -569,6 +648,17 @@
     <div class="mic-label" id="spinner-label">Translating...</div>
   </div>
 
+  <!-- CONFIRM -->
+  <div class="confirm-section" id="confirm-section" style="display:none">
+    <div class="confirm-label">Did we hear that right?</div>
+    <input class="confirm-input" id="confirm-input" type="text">
+    <div class="btn-row">
+      <button class="btn-skip" onclick="resetView()">✕ Cancel</button>
+      <button class="btn-add" onclick="confirmAndTranslate()">Translate →</button>
+    </div>
+    <button class="btn-next" onclick="toggleListening()">🎤 Try again</button>
+  </div>
+
   <!-- RESULT -->
   <div class="result-card" id="result-card" style="display:none">
     <div class="r-word" id="r-word"></div>
@@ -582,11 +672,18 @@
         <span style="animation:spin 0.8s linear infinite;display:inline-block">⟳</span> Translating sentence...
       </div>
     </div>
-    <button class="btn-sentence" id="btn-sentence"
-      onmousedown="startSentence()" onmouseup="stopSentence()"
-      ontouchstart="startSentence()" ontouchend="stopSentence()">
+    <!-- Sentence confirm (hidden by default) -->
+    <div id="sentence-confirm" style="display:none;flex-direction:column;gap:8px">
+      <div style="font-size:11px;color:#666;letter-spacing:1px;text-transform:uppercase">Your sentence — edit if needed</div>
+      <textarea id="sentence-confirm-input" style="background:var(--surface2);border:1px solid var(--gold);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;resize:none;width:100%" rows="2"></textarea>
+      <div style="display:flex;gap:8px">
+        <button style="flex:1;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:9px;font-family:inherit;font-size:13px;cursor:pointer" onclick="cancelSentenceConfirm()">✕ Use Claude's</button>
+        <button style="flex:2;background:var(--gold);border:none;color:#0d0d0e;border-radius:8px;padding:9px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer" onclick="submitSentenceConfirm()">Translate →</button>
+      </div>
+    </div>
+    <button class="btn-sentence" id="btn-sentence" onclick="toggleSentence()">
       <span id="sentence-btn-icon">🎙️</span>
-      <span id="sentence-btn-label">Hold & dictate your own sentence</span>
+      <span id="sentence-btn-label">Tap to dictate your own sentence</span>
     </button>
     <div class="btn-row">
       <button class="btn-skip" onclick="resetView()">✕ Skip</button>
@@ -616,6 +713,33 @@
     <div>No cards yet.<br>Dictate your first word!</div>
   </div>
   <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">Edit card</div>
+    <div>
+      <label>Word</label>
+      <input id="edit-word" type="text">
+    </div>
+    <div>
+      <label>Polish translation</label>
+      <input id="edit-translation" type="text">
+    </div>
+    <div>
+      <label>Example sentence</label>
+      <textarea id="edit-example"></textarea>
+    </div>
+    <div>
+      <label>Example translation</label>
+      <textarea id="edit-example-tr"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeEdit()">Cancel</button>
+      <button class="modal-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -715,6 +839,7 @@ function resetView() {
   hide('spinner-section');
   hide('result-card');
   hide('err-box');
+  document.getElementById('confirm-section').style.display = 'none';
   show('mic-section');
   const t = document.getElementById('transcript');
   t.style.display = 'none';
@@ -739,6 +864,21 @@ function toggleListening() {
   } else {
     startListening();
   }
+}
+
+function showConfirm(word) {
+  hide('mic-section');
+  hide('err-box');
+  document.getElementById('confirm-input').value = word;
+  document.getElementById('confirm-section').style.display = 'flex';
+  document.getElementById('confirm-input').select();
+}
+
+function confirmAndTranslate() {
+  const word = document.getElementById('confirm-input').value.trim();
+  if (!word) return;
+  document.getElementById('confirm-section').style.display = 'none';
+  translate(word);
 }
 
 function translateTyped() {
@@ -783,12 +923,12 @@ function startListening() {
     el.style.display = 'block';
   };
 
-  recognition.onend = async () => {
+  recognition.onend = () => {
     isListening = false;
     document.getElementById('mic-btn').classList.remove('listening');
     document.getElementById('mic-btn').textContent = '🎤';
     if (lastTranscript.trim()) {
-      await translate(lastTranscript.trim());
+      showConfirm(lastTranscript.trim());
     } else {
       document.getElementById('mic-label').textContent = 'Tap to start recording';
     }
@@ -855,7 +995,12 @@ Return ONLY a valid JSON object, no markdown, no backticks, no extra text:
       })
     });
     const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) {
+      const msg = data.error.type === 'overloaded_error'
+        ? 'Claude is overloaded right now. Wait a moment and try again.'
+        : data.error.message;
+      throw new Error(msg);
+    }
     const text = data.content.map(i => i.text || '').join('');
     const clean = text.replace(/```json|```/g, '').trim();
     currentResult = JSON.parse(clean);
@@ -872,6 +1017,10 @@ function showResult(r) {
   document.getElementById('r-trans').textContent = '→ ' + r.translation;
   document.getElementById('r-ex').textContent = r.example;
   document.getElementById('r-ex-tr').textContent = r.exampleTranslation;
+  // Save Claude's generated example so user can revert
+  claudeExample = { example: r.example, exampleTranslation: r.exampleTranslation };
+  document.getElementById('sentence-confirm').style.display = 'none';
+  document.getElementById('btn-sentence').style.display = 'flex';
   show('result-card');
 }
 
@@ -883,14 +1032,26 @@ function showError(msg) {
 }
 
 // --- SENTENCE DICTATION ---
+let isSentenceListening = false;
+let claudeExample = { example: '', exampleTranslation: '' };
+
+function toggleSentence() {
+  if (isSentenceListening) {
+    stopSentence();
+  } else {
+    startSentence();
+  }
+}
+
 function startSentence() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
+  isSentenceListening = true;
   lastSentenceTranscript = '';
   const btn = document.getElementById('btn-sentence');
   btn.classList.add('listening-sentence');
-  document.getElementById('sentence-btn-icon').textContent = '🔴';
-  document.getElementById('sentence-btn-label').textContent = 'Listening... (release)';
+  document.getElementById('sentence-btn-icon').textContent = '⏹';
+  document.getElementById('sentence-btn-label').textContent = 'Recording... tap to stop';
 
   sentenceRecognition = new SR();
   sentenceRecognition.lang = currentSpeechLang;
@@ -903,27 +1064,57 @@ function startSentence() {
     document.getElementById('sentence-btn-label').textContent = t;
   };
 
-  sentenceRecognition.onend = async () => {
+  sentenceRecognition.onend = () => {
+    isSentenceListening = false;
     btn.classList.remove('listening-sentence');
     document.getElementById('sentence-btn-icon').textContent = '🎙️';
     if (lastSentenceTranscript.trim()) {
-      await translateSentence(lastSentenceTranscript.trim());
+      showSentenceConfirm(lastSentenceTranscript.trim());
     } else {
-      document.getElementById('sentence-btn-label').textContent = 'Hold & dictate your own sentence';
+      document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
     }
   };
 
   sentenceRecognition.onerror = () => {
+    isSentenceListening = false;
     btn.classList.remove('listening-sentence');
     document.getElementById('sentence-btn-icon').textContent = '🎙️';
-    document.getElementById('sentence-btn-label').textContent = 'Hold & dictate your own sentence';
+    document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
   };
 
   sentenceRecognition.start();
 }
 
 function stopSentence() {
+  isSentenceListening = false;
   if (sentenceRecognition) sentenceRecognition.stop();
+}
+
+function showSentenceConfirm(sentence) {
+  document.getElementById('sentence-confirm-input').value = sentence;
+  document.getElementById('sentence-confirm').style.display = 'flex';
+  document.getElementById('btn-sentence').style.display = 'none';
+}
+
+function cancelSentenceConfirm() {
+  document.getElementById('sentence-confirm').style.display = 'none';
+  document.getElementById('btn-sentence').style.display = 'flex';
+  // Restore Claude's original example
+  if (claudeExample.example) {
+    currentResult.example = claudeExample.example;
+    currentResult.exampleTranslation = claudeExample.exampleTranslation;
+    document.getElementById('r-ex').textContent = claudeExample.example;
+    document.getElementById('r-ex-tr').textContent = claudeExample.exampleTranslation;
+  }
+  document.getElementById('sentence-btn-label').textContent = 'Tap to dictate your own sentence';
+  document.getElementById('sentence-btn-icon').textContent = '🎙️';
+}
+
+async function submitSentenceConfirm() {
+  const sentence = document.getElementById('sentence-confirm-input').value.trim();
+  if (!sentence) return;
+  document.getElementById('sentence-confirm').style.display = 'none';
+  await translateSentence(sentence);
 }
 
 async function translateSentence(sentence) {
@@ -938,33 +1129,60 @@ Return ONLY a valid JSON object, no markdown, no extra text:
   try {
     const res = await fetch('https://vocabrec.arkadiusz-pluta89.workers.dev/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': getApiKey(),
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      headers: { 'Content-Type': 'application/json', 'x-api-key': getApiKey() },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await res.json();
+    if (data.error) {
+      const msg = data.error.type === 'overloaded_error'
+        ? 'Claude is overloaded. Try again in a moment.' : data.error.message;
+      throw new Error(msg);
+    }
     const text = data.content.map(i => i.text || '').join('');
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    // Replace example with user's own sentence
     currentResult.example = parsed.sentence;
     currentResult.exampleTranslation = parsed.sentenceTranslation;
     document.getElementById('r-ex').textContent = parsed.sentence;
     document.getElementById('r-ex-tr').textContent = parsed.sentenceTranslation;
-    document.getElementById('sentence-btn-label').textContent = '✓ Sentence added — hold to change';
+    document.getElementById('sentence-btn-label').textContent = '✓ Your sentence added — tap to change';
     document.getElementById('sentence-btn-icon').textContent = '🎙️';
     document.getElementById('btn-sentence').style.display = 'flex';
-  } catch {
-    document.getElementById('sentence-btn-label').textContent = 'Error — try again';
+  } catch (err) {
+    document.getElementById('sentence-btn-label').textContent = '⚠ ' + (err.message || 'Error — try again');
     document.getElementById('sentence-btn-icon').textContent = '🎙️';
     document.getElementById('btn-sentence').style.display = 'flex';
   }
   document.getElementById('sentence-translating').style.display = 'none';
+}
+
+// --- EDIT CARD ---
+let editingId = null;
+function openEdit(id) {
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+  editingId = id;
+  document.getElementById('edit-word').value = card.word || '';
+  document.getElementById('edit-translation').value = card.translation || '';
+  document.getElementById('edit-example').value = card.example || '';
+  document.getElementById('edit-example-tr').value = card.exampleTranslation || '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEdit() {
+  editingId = null;
+  document.getElementById('edit-modal').classList.remove('open');
+}
+async function saveEdit() {
+  if (!editingId) return;
+  const idx = cards.findIndex(c => c.id === editingId);
+  if (idx === -1) return;
+  cards[idx].word = document.getElementById('edit-word').value.trim();
+  cards[idx].translation = document.getElementById('edit-translation').value.trim();
+  cards[idx].example = document.getElementById('edit-example').value.trim();
+  cards[idx].exampleTranslation = document.getElementById('edit-example-tr').value.trim();
+  await saveData();
+  closeEdit();
+  renderCards();
+  showToast('✓ Card updated');
 }
 
 // --- ANKI EXPORT ---
@@ -976,7 +1194,7 @@ function exportAnki() {
     '#html:false',
     '#notetype:Fiszki',
     '#deck:Fiszki',
-    '#columns:Sentence\tAnswer\tPolish\tFull'
+    '#columns:Sentence\tAnswer\tPolish\tFull\tTags'
   ];
 
   cards.forEach(card => {
@@ -1055,7 +1273,8 @@ function renderCards() {
              <button class="del-yes" onclick="deleteCard(${card.id})">Yes</button>
              <button class="del-no" onclick="cancelDelete()">No</button>
            </div>`
-        : `<button class="del-btn" onclick="event.stopPropagation();askDelete(${card.id})">×</button>`
+        : `<button class="edit-btn" onclick="event.stopPropagation();openEdit(${card.id})">✎</button>
+           <button class="del-btn" onclick="event.stopPropagation();askDelete(${card.id})">×</button>`
       }
     </div>
   `).join('');
